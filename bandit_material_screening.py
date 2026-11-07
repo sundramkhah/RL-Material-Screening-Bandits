@@ -1,22 +1,9 @@
-"""
-Active Material Screening via Multi-Armed Bandits (UCB1 vs. Random Baseline)
-
-Course Project Deliverable: Implementation and Benchmark
-Authors:
-- Subankar Dey (Roll No. 100523733096)
-- Ashfaq Zahoor Kachroo (Roll No. 100523733075)
-- Sundram Khah (Roll No. 100523733062)
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 class MaterialScreeningEnv:
-    """
-    Simulates a high-throughput material screening laboratory.
-    K candidate compositions with unknown true performance means and Gaussian measurement noise.
-    """
+    
     def __init__(self, means: np.ndarray, noise_std: float = 0.05):
         self.means = np.array(means)
         self.k = len(means)
@@ -25,15 +12,12 @@ class MaterialScreeningEnv:
         self.optimal_arm = int(np.argmax(self.means))
 
     def step(self, action: int) -> float:
-        """Synthesize candidate 'action' and return observed yield."""
         noise = np.random.normal(0, self.noise_std)
         return float(self.means[action] + noise)
 
 
 class UCB1Agent:
-    """
-    Upper Confidence Bound (UCB1) agent balancing exploration and exploitation.
-    """
+   
     def __init__(self, n_arms: int, c: float = np.sqrt(2)):
         self.n_arms = n_arms
         self.c = c
@@ -42,26 +26,21 @@ class UCB1Agent:
         self.total_pulls = 0
 
     def select_action(self) -> int:
-        # Initial phase: try every material candidate at least once
         for arm in range(self.n_arms):
             if self.counts[arm] == 0:
                 return arm
 
-        # UCB1 selection rule: empirical mean + uncertainty bonus
         bonus = self.c * np.sqrt(np.log(self.total_pulls) / self.counts)
         return int(np.argmax(self.q_values + bonus))
 
     def update(self, action: int, reward: float):
         self.total_pulls += 1
         self.counts[action] += 1
-        # Incremental running mean update
         self.q_values[action] += (reward - self.q_values[action]) / self.counts[action]
 
 
 class RandomScreeningAgent:
-    """
-    Baseline agent representing unguided combinatorial trial-and-error.
-    """
+    
     def __init__(self, n_arms: int):
         self.n_arms = n_arms
         self.counts = np.zeros(n_arms, dtype=int)
@@ -74,9 +53,7 @@ class RandomScreeningAgent:
 
 
 def run_experiment(env: MaterialScreeningEnv, agent_class, horizon: int, trials: int, **agent_kwargs):
-    """
-    Runs repeated independent trials across random seeds to compute mean and standard error.
-    """
+    
     rewards = np.zeros((trials, horizon))
     cumulative_regret = np.zeros((trials, horizon))
 
@@ -97,14 +74,12 @@ def run_experiment(env: MaterialScreeningEnv, agent_class, horizon: int, trials:
 
 
 def moving_average(data: np.ndarray, window_size: int = 30) -> np.ndarray:
-    """Computes moving average along the time axis."""
-    return np.convolve(data, np.ones(window_size), 'valid') / window_size
+      return np.convolve(data, np.ones(window_size), 'valid') / window_size
 
 
 def main():
     np.random.seed(42)
 
-    # 20 candidate materials with ground-truth yields from 0.10 to 0.95
     true_means = np.linspace(0.10, 0.95, num=20)
     T = 1000
     N_TRIALS = 100
@@ -118,11 +93,9 @@ def main():
     print(f"Running {N_TRIALS} trials of Random Baseline...")
     rnd_rewards, rnd_regret = run_experiment(env, RandomScreeningAgent, horizon=T, trials=N_TRIALS)
 
-    # Generate Learning Curves
     steps = np.arange(1, T + 1)
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-    # Plot 1: Cumulative Regret
     ucb_reg_mean = np.mean(ucb_regret, axis=0)
     rnd_reg_mean = np.mean(rnd_regret, axis=0)
     ucb_reg_se = np.std(ucb_regret, axis=0) / np.sqrt(N_TRIALS)
@@ -138,7 +111,6 @@ def main():
     axes[0].legend()
     axes[0].grid(True, alpha=0.3)
 
-    # Plot 2: Empirical Observed Yield Convergence
     w = 30
     ucb_avg_r = np.mean(ucb_rewards, axis=0)
     rnd_avg_r = np.mean(rnd_rewards, axis=0)
